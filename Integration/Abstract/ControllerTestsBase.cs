@@ -19,7 +19,7 @@ public abstract class ControllerTestsBase : IDisposable
     protected ControllerTestsBase()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDatabase")
+            .UseInMemoryDatabase(databaseName: "TestDatabase_" + Guid.NewGuid())
             .Options;
 
         var googleServiceMock = new Mock<IGoogleAuthenticationService>();
