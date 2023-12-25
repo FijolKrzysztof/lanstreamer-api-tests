@@ -195,7 +195,7 @@ public class AdminControllerTests : ControllerTestsBase
 
         Assert.Equal(200, (int)response.StatusCode);
         
-        var filePath = ApplicationBuildPath.GetPath(OperatingSystem.Linux);
+        var filePath = ApplicationBuildPath.GetPath(OperatingSystem.Windows);
         if (File.Exists(filePath))
         {
             File.Delete(filePath);
@@ -245,16 +245,12 @@ public class AdminControllerTests : ControllerTestsBase
         const string accessToken = "correct-token";
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
+        await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=linux", formData);
 
         var filePath = ApplicationBuildPath.GetPath(OperatingSystem.Linux);
         var fileExists = File.Exists(filePath);
 
-        Assert.True(fileExists); // TODO: coś jest nie tak bo tego pliku nie ma z tego co sprawdzałem
-        
-        if (fileExists)
-        {
-            File.Delete(filePath);
-        }
+        Assert.True(fileExists);
+        File.Delete(filePath);
     }
 }
