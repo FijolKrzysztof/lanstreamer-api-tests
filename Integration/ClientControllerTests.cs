@@ -90,9 +90,9 @@ public class ClientControllerTests : ControllerTestsBase
     }
 
     [Fact]
-    public async Task AddFeedbacks_ShouldReturnCorrectStatusCode()
+    public async Task AddFeedback_ShouldReturnCorrectStatusCode()
     {
-        var feedbacks = new List<string>() { "Good", "Great" };
+        const string feedback = "feedback";
 
         _context.Clients.Add(new ClientEntity()
         {
@@ -104,9 +104,9 @@ public class ClientControllerTests : ControllerTestsBase
         });
         await _context.SaveChangesAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/client/1/add-feedbacks");
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/client/1/add-feedback");
         request.Content = new StringContent(
-            JsonConvert.SerializeObject(feedbacks),
+            JsonConvert.SerializeObject(feedback),
             Encoding.UTF8,
             "application/json"
         );
@@ -117,9 +117,9 @@ public class ClientControllerTests : ControllerTestsBase
     }
 
     [Fact]
-    public async Task AddFeedbacks_ShouldAddCorrectDataToDatabase()
+    public async Task AddFeedback_ShouldAddCorrectDataToDatabase()
     {
-        var feedbacks = new List<string>() { "Good", "Great" };
+        const string feedback = "feedback";
 
         _context.Clients.Add(new ClientEntity()
         {
@@ -131,9 +131,9 @@ public class ClientControllerTests : ControllerTestsBase
         });
         await _context.SaveChangesAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/client/1/add-feedbacks");
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/client/1/add-feedback");
         request.Content = new StringContent(
-            JsonConvert.SerializeObject(feedbacks),
+            JsonConvert.SerializeObject(feedback),
             Encoding.UTF8,
             "application/json"
         );
@@ -144,12 +144,10 @@ public class ClientControllerTests : ControllerTestsBase
         var feedbackEntities = _context.Feedbacks.Where(f => f.ClientId == clientEntity.Id).ToList();
 
         Assert.NotNull(clientEntity);
-        Assert.Equal(2, feedbackEntities.Count);
+        Assert.Single(feedbackEntities);
 
         Assert.Equal(1, feedbackEntities[0].Id);
-        Assert.Equal(2, feedbackEntities[1].Id);
-        Assert.Equal("Good", feedbackEntities[0].Message);
-        Assert.Equal("Great", feedbackEntities[1].Message);
+        Assert.Equal("feedback", feedbackEntities[0].Message);
     }
 
     [Fact]

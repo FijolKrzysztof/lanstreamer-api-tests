@@ -91,19 +91,19 @@ public class ClientServiceTests
     }
 
     [Fact]
-    public async Task AddFeedbacks_ShouldThrowAnErrorWhenIdIsNotCorrect()
+    public async Task AddFeedback_ShouldThrowAnErrorWhenIdIsNotCorrect()
     {
         _clientRepository.Setup(repo => repo.GetById(It.IsAny<int>()))
             .ReturnsAsync((ClientEntity) null);
         
-        await Assert.ThrowsAsync<AppException>(() => _clientService.AddFeedbacks(2, new List<string>()));
+        await Assert.ThrowsAsync<AppException>(() => _clientService.AddFeedbacks(2, "feedback"));
     }
     
     [Fact]
-    public async Task AddFeedbacks_ShouldAddFeedbacks()
+    public async Task AddFeedback_ShouldAddFeedbacks()
     {
-        var clientId = 1;
-        var feedbacks = new List<string>() { "feedback1", "feedback2" };
+        const int clientId = 1;
+        const string feedback = "feedback";
 
         _clientRepository.Setup(repo => repo.GetById(It.IsAny<int>()))
             .ReturnsAsync(new ClientEntity() { Id = 1 });
@@ -111,21 +111,18 @@ public class ClientServiceTests
         _feedbackRepository.Setup(repo => repo.AddMany(It.IsAny<IEnumerable<FeedbackEntity>>()))
             .Callback<IEnumerable<FeedbackEntity>>(feedbackEntities =>
             {
-                for (var i = 0; i < feedbacks.Count; i++)
-                {
-                    Assert.Equal(feedbacks[i], feedbackEntities.ElementAt(i).Message);
-                }
+                Assert.Equal(feedback, feedbackEntities.ElementAt(0).Message);
             });
         
-        await _clientService.AddFeedbacks(clientId, feedbacks);
+        await _clientService.AddFeedbacks(clientId, feedback);
     }
 
     [Fact]
-    public async Task AddFeedbacks_ShouldAppendFeedbacks()
+    public async Task AddFeedback_ShouldAppendFeedbacks()
     {
-        var clientId = 1;
-        var feedbacks = new List<string>() { "feedback1", "feedback2" };
-        var clientEntity = new ClientEntity() { Id = 1, Feedbacks = new List<FeedbackEntity>() { new FeedbackEntity() { Message = "feedback3" } } };
+        const int clientId = 1;
+        const string feedback = "feedback";
+        var clientEntity = new ClientEntity() { Id = 1, Feedbacks = new List<FeedbackEntity>() { new FeedbackEntity() { Message = "feedback2" } } };
         
         _clientRepository.Setup(repo => repo.GetById(It.IsAny<int>()))
             .ReturnsAsync(clientEntity);
@@ -133,12 +130,11 @@ public class ClientServiceTests
         _feedbackRepository.Setup(repo => repo.AddMany(It.IsAny<IEnumerable<FeedbackEntity>>()))
             .Callback<IEnumerable<FeedbackEntity>>(feedbackEntities =>
             {
-                Assert.Equal("feedback3", feedbackEntities.ElementAt(0).Message);
-                Assert.Equal(feedbacks[0], feedbackEntities.ElementAt(1).Message);
-                Assert.Equal(feedbacks[1], feedbackEntities.ElementAt(2).Message);
+                Assert.Equal("feedback2", feedbackEntities.ElementAt(0).Message);
+                Assert.Equal(feedback, feedbackEntities.ElementAt(1).Message);
             });
 
-        await _clientService.AddFeedbacks(clientId, feedbacks);
+        await _clientService.AddFeedbacks(clientId, feedback);
     }
     
     [Fact]

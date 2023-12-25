@@ -17,10 +17,12 @@ public class DesktopAppControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.DesktopAppVersion,
+            Key = ConfigurationKey.DesktopAppVersion, // TODO: zobaczyć jak to się zapisuje w bazie bo obstawiam że średnio
             Value = "2.0"
         });
         await _context.SaveChangesAsync();
+        
+        // TODO: dodać części uwspólnione
 
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/desktop-app/access?accessCode=123&version=1.0");
         request.Content = new StringContent(
