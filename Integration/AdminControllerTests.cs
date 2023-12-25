@@ -32,6 +32,8 @@ public class AdminControllerTests : ControllerTestsBase
         Assert.Equal("Missing google token", errorResponse.Message);
         Assert.Equal(401, errorResponse.StatusCode);
     }
+    
+    // TODO: dodać test który rzeczywiście sprawdzi czy plik jest zipem
 
     [Fact]
     public async Task UploadDesktopApp_ShouldNotAuthorize_WhenNoAdminRole()
@@ -62,7 +64,7 @@ public class AdminControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.AdminIdentifier,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
         await _context.SaveChangesAsync();
@@ -93,7 +95,7 @@ public class AdminControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.AdminIdentifier,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
         await _context.SaveChangesAsync();
@@ -124,7 +126,7 @@ public class AdminControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.AdminIdentifier,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
         await _context.SaveChangesAsync();
@@ -154,7 +156,7 @@ public class AdminControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.AdminIdentifier,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
         await _context.SaveChangesAsync();
@@ -208,7 +210,7 @@ public class AdminControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.AdminIdentifier,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
         await _context.SaveChangesAsync();

@@ -17,7 +17,7 @@ public class DesktopAppControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.DesktopAppVersion, // TODO: zobaczyć jak to się zapisuje w bazie bo obstawiam że średnio
+            Key = ConfigurationKey.DesktopAppVersion.ToString(),
             Value = "2.0"
         });
         await _context.SaveChangesAsync();
@@ -48,13 +48,13 @@ public class DesktopAppControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.DesktopAppVersion,
+            Key = ConfigurationKey.DesktopAppVersion.ToString(),
             Value = "1.0"
         });
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
-            Key = ConfigurationKey.LoginTimeoutSeconds,
+            Key = ConfigurationKey.LoginTimeoutSeconds.ToString(),
             Value = "1"
         });
         await _context.SaveChangesAsync();
@@ -83,13 +83,13 @@ public class DesktopAppControllerTests : ControllerTestsBase
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
-            Key = ConfigurationKey.DesktopAppVersion,
+            Key = ConfigurationKey.DesktopAppVersion.ToString(),
             Value = "1.0"
         });
         _context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
-            Key = ConfigurationKey.LoginTimeoutSeconds,
+            Key = ConfigurationKey.LoginTimeoutSeconds.ToString(),
             Value = "60"
         });
         await _context.SaveChangesAsync();
