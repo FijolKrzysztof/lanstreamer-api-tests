@@ -92,6 +92,12 @@ public class DesktopAppControllerTests : ControllerTestsBase
             Key = ConfigurationKey.LoginTimeoutSeconds.ToString(),
             Value = "60"
         });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 3,
+            Key = ConfigurationKey.OfflineLogins.ToString(),
+            Value = "3"
+        });
         await _context.SaveChangesAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/desktop-app/access?accessCode=123&version=1.0");
@@ -117,7 +123,7 @@ public class DesktopAppControllerTests : ControllerTestsBase
                 {
                     var line = await reader.ReadLineAsync();
                     
-                    Assert.Equal(1, int.Parse(line));
+                    Assert.Equal(3, int.Parse(line));
                     return;
                 }
             }
