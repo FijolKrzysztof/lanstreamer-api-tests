@@ -3,6 +3,7 @@ using System.Text;
 using lanstreamer_api_tests.Integration.Abstract;
 using lanstreamer_api.App.Data.Dto.Responses;
 using lanstreamer_api.App.Data.Models.Enums;
+using lanstreamer_api.Data.Modules.AccessCode;
 using lanstreamer_api.Models;
 using lanstreamer_api.Models.Responses;
 using Newtonsoft.Json;
@@ -74,6 +75,13 @@ public class UserControllerTests : IntegrationTestsBase
     [Fact]
     public async Task Login_ShouldAddCorrectDataToDatabase()
     {
+        _context.Accesses.Add(new AccessEntity()
+        {
+            Code = "access-code",
+            UserId = 1,
+        });
+        await _context.SaveChangesAsync();
+        
         const string accessToken = "correct-token";
         
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -96,13 +104,13 @@ public class UserControllerTests : IntegrationTestsBase
         
         var userEntity = await _context.Users.FindAsync(1);
         var ipLocationEntity = await _context.IpLocations.FindAsync(userEntity.IpLocationId);
+        var accessEntity = await _context.Accesses.FindAsync(1);
         
         Assert.NotNull(userEntity);
         Assert.Equal(1, userEntity.Id);
         Assert.Equal("email", userEntity.Email);
         Assert.Equal(DateTime.UtcNow.Date, userEntity.LastLogin.Date);
         Assert.Equal("subject/id", userEntity.GoogleId);
-        Assert.Equal("access-code", userEntity.AccessCode);
         Assert.Equal(1, userEntity.IpLocationId);
         
         Assert.NotNull(ipLocationEntity);
@@ -113,5 +121,8 @@ public class UserControllerTests : IntegrationTestsBase
         Assert.Equal("94304", ipLocationEntity.Postal);
         Assert.Equal("America/Los_Angeles", ipLocationEntity.Timezone);
         Assert.Equal("37.4334,-122.1842", ipLocationEntity.Loc);
+
+        Assert.NotNull(accessEntity);
+        Assert.Equal(userEntity.Id, accessEntity.UserId);
     }
 }

@@ -1,5 +1,6 @@
 using lanstreamer_api.App.Data.Models;
 using lanstreamer_api.App.Modules;
+using lanstreamer_api.Data.Modules.AccessCode;
 using lanstreamer_api.Data.Modules.IpLocation;
 using lanstreamer_api.Data.Modules.User;
 using lanstreamer_api.Models;
@@ -27,7 +28,9 @@ public class UserConverterTests
         var user = _userConverter.Convert<lanstreamer_api.App.Data.Models.User>(userDto);
 
         Assert.Equal(userDto.Id, user.Id);
-        Assert.Equal(userDto.AccessCode, user.AccessCode);
+        
+        Assert.NotNull(user.Access);
+        Assert.Equal(userDto.AccessCode, user.Access.Code);
     }
 
     [Fact]
@@ -36,13 +39,16 @@ public class UserConverterTests
         var user = new lanstreamer_api.App.Data.Models.User()
         {
             Id = 1,
-            AccessCode = "1234",
+            Access = new Access()
+            {
+                Code = "1234"
+            }
         };
 
         var userDto = _userConverter.Convert<UserDto>(user);
 
         Assert.Equal(user.Id, userDto.Id);
-        Assert.Equal(user.AccessCode, userDto.AccessCode);
+        Assert.Equal(user.Access.Code, userDto.AccessCode);
     }
 
     [Fact]
@@ -51,7 +57,6 @@ public class UserConverterTests
         var user = new lanstreamer_api.App.Data.Models.User()
         {
             Id = 1,
-            AccessCode = "1234",
             Email = "email",
             LastLogin = new DateTime(),
             AppVersion = 1.0f,
@@ -66,12 +71,15 @@ public class UserConverterTests
                 Timezone = "EST",
                 Loc = "40.7128,-74.0060",
             },
+            Access = new Access()
+            {
+                Code = "123",
+            }
         };
 
         var userEntity = _userConverter.Convert<UserEntity>(user);
 
         Assert.Equal(user.Id, userEntity.Id);
-        Assert.Equal(user.AccessCode, userEntity.AccessCode);
         Assert.Equal(user.Email, userEntity.Email);
         Assert.Equal(user.LastLogin, userEntity.LastLogin);
         Assert.Equal(user.AppVersion, userEntity.AppVersion);
@@ -86,6 +94,10 @@ public class UserConverterTests
         Assert.Equal(user.IpLocation.Postal, userEntity.IpLocation.Postal);
         Assert.Equal(user.IpLocation.Timezone, userEntity.IpLocation.Timezone);
         Assert.Equal(user.IpLocation.Loc, userEntity.IpLocation.Loc);
+
+        Assert.NotNull(userEntity.Access);
+        
+        Assert.Equal(user.Access.Code, userEntity.Access.Code);
     }
 
     [Fact]
@@ -94,7 +106,6 @@ public class UserConverterTests
         var userEntity = new UserEntity()
         {
             Id = 1,
-            AccessCode = "1234",
             Email = "email",
             LastLogin = new DateTime(),
             AppVersion = 1.0f,
@@ -109,12 +120,18 @@ public class UserConverterTests
                 Timezone = "EST",
                 Loc = "40.7128,-74.0060",
             },
+            Access = new AccessEntity()
+            {
+                Id = 1,
+                Code = "123",
+                UserId = 1,
+                ExpirationDate = new DateTime()
+            }
         };
         
         var user = _userConverter.Convert<lanstreamer_api.App.Data.Models.User>(userEntity);
         
         Assert.Equal(userEntity.Id, user.Id);
-        Assert.Equal(userEntity.AccessCode, user.AccessCode);
         Assert.Equal(userEntity.Email, user.Email);
         Assert.Equal(userEntity.LastLogin, user.LastLogin);
         Assert.Equal(userEntity.AppVersion, user.AppVersion);
@@ -129,6 +146,11 @@ public class UserConverterTests
         Assert.Equal(userEntity.IpLocation.Postal, user.IpLocation.Postal);
         Assert.Equal(userEntity.IpLocation.Timezone, user.IpLocation.Timezone);
         Assert.Equal(userEntity.IpLocation.Loc, user.IpLocation.Loc);
+
+        Assert.NotNull(user.Access);
+        
+        Assert.Equal(userEntity.Access.Code, user.Access.Code);
+        Assert.Equal(userEntity.Access.ExpirationDate, user.Access.ExpirationDate);
     }
 
     [Fact]
@@ -137,13 +159,17 @@ public class UserConverterTests
         var userEntity = new UserEntity()
         {
             Id = 1,
-            AccessCode = "1234",
+            Access = new AccessEntity()
+            {
+                UserId = 1,
+                Code = "1234",
+            }
         };
         
         var userDto = _userConverter.ChainConvert<lanstreamer_api.App.Data.Models.User>(userEntity).To<UserDto>();
         
         Assert.Equal(userEntity.Id, userDto.Id);
-        Assert.Equal(userEntity.AccessCode, userDto.AccessCode);
+        Assert.Equal(userEntity.Access.Code, userDto.AccessCode);
     }
     
     [Fact]
@@ -158,6 +184,9 @@ public class UserConverterTests
         var userEntity = _userConverter.ChainConvert<lanstreamer_api.App.Data.Models.User>(userDto).To<UserEntity>();
         
         Assert.Equal(userDto.Id, userEntity.Id);
-        Assert.Equal(userDto.AccessCode, userEntity.AccessCode);
+
+        Assert.NotNull(userEntity.Access);
+        
+        Assert.Equal(userDto.AccessCode, userEntity.Access.Code);
     }
 }
