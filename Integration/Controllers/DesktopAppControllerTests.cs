@@ -136,7 +136,7 @@ public class DesktopAppControllerTests : IntegrationTestsBase
                 cancellationTokenSource.Dispose();
             }
         });
-
+        
         const string accessToken = "correct-token";
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
