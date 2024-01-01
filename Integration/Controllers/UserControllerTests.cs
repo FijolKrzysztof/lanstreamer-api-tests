@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace lanstreamer_api_tests.Integration;
 
-public class UserControllerTests : ControllerTestsBase
+public class UserControllerTests : IntegrationTestsBase
 {
     [Fact]
     public async Task Login_ShouldNotAuthorize_WhenNoGoogleId()

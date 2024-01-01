@@ -10,13 +10,13 @@ using Moq;
 
 namespace lanstreamer_api_tests.Integration.Abstract;
 
-public abstract class ControllerTestsBase : IDisposable
+public abstract class IntegrationTestsBase : IDisposable
 {
     protected readonly TestServer _server;
     protected readonly HttpClient _client;
     protected readonly ApplicationDbContext _context;
 
-    protected ControllerTestsBase()
+    protected IntegrationTestsBase()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: "TestDatabase_" + Guid.NewGuid())
