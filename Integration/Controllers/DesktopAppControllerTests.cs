@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace lanstreamer_api_tests.Integration;
 
-public class DesktopAppControllerTests : ControllerTestsBase
+public class DesktopAppControllerTests : IntegrationTestsBase
 {
     [Fact]
     public async Task ShouldThrowAnError_WhenWrongAppVersion()
@@ -78,7 +78,7 @@ public class DesktopAppControllerTests : ControllerTestsBase
     }
 
     [Fact]
-    public async Task ShouldReturnTrue()
+    public async Task ShouldReturnNumber()
     {
         _context.Configurations.Add(new ConfigurationEntity()
         {
@@ -135,6 +135,62 @@ public class DesktopAppControllerTests : ControllerTestsBase
             {
                 cancellationTokenSource.Dispose();
             }
+        });
+
+        const string accessToken = "correct-token";
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        await _client.PostAsync("/api/user/login", new StringContent(
+            JsonConvert.SerializeObject(new UserDto()
+            {
+                AccessCode = "123"
+            }),
+            Encoding.UTF8,
+            "application/json"
+        ));
+
+        await task;
+    }
+
+    [Fact]
+    public async Task ShouldUpdateAppVersion()
+    {
+           _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.DesktopAppVersion.ToString(),
+            Value = "1.0"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 2,
+            Key = ConfigurationKey.LoginTimeoutSeconds.ToString(),
+            Value = "60"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 3,
+            Key = ConfigurationKey.OfflineLogins.ToString(),
+            Value = "3"
+        });
+        await _context.SaveChangesAsync();
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/desktop-app/access?accessCode=123&version=1.0");
+        request.Content = new StringContent(
+            "",
+            Encoding.UTF8,
+            "text/event-stream"
+        );
+
+        var task = Task.Run(async () =>
+        {
+            await _client.SendAsync(request);
+            
+            var user = await _context.Users.FindAsync(1);
+
+            Assert.NotNull(user);
+            Assert.Equal(1, user.AppVersion);
         });
 
         const string accessToken = "correct-token";

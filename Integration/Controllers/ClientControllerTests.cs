@@ -16,7 +16,7 @@ using OperatingSystem = lanstreamer_api.App.Data.Models.Enums.OperatingSystem;
 
 namespace lanstreamer_api_tests.Integration;
 
-public class ClientControllerTests : ControllerTestsBase
+public class ClientControllerTests : IntegrationTestsBase
 {
     [Fact]
     public async Task CreateClient_ShouldReturnCreatedObjResponse()

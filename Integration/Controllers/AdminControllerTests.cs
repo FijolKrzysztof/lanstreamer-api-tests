@@ -12,7 +12,7 @@ using OperatingSystem = lanstreamer_api.App.Data.Models.Enums.OperatingSystem;
 
 namespace lanstreamer_api_tests.Integration;
 
-public class AdminControllerTests : ControllerTestsBase
+public class AdminControllerTests : IntegrationTestsBase
 {
     [Fact]
     public async Task UploadDesktopApp_ShouldNotAuthorize_WhenNoGoogleToken()
