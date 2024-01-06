@@ -4,6 +4,7 @@ using lanstreamer_api_tests.Utills;
 using lanstreamer_api.App.Client;
 using lanstreamer_api.App.Data.Dto;
 using lanstreamer_api.App.Data.Models.Enums;
+using lanstreamer_api.Data.Configuration;
 using lanstreamer_api.Entities;
 using lanstreamer_api.Models;
 using lanstreamer_api.services;
@@ -214,6 +215,24 @@ public class ClientControllerTests : IntegrationTestsBase
             VisitTime = DateTime.UtcNow,
             Language = "en",
         });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.StoragePath.ToString(),
+            Value = "temp"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 2,
+            Key = ConfigurationKey.LanstreamerLinuxFilename.ToString(),
+            Value = "lanstreamer-linux.zip"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 3,
+            Key = ConfigurationKey.LanstreamerWindowsFilename.ToString(),
+            Value = "lanstreamer-windows.zip"
+        });
         await _context.SaveChangesAsync();
         
         var request = new HttpRequestMessage(HttpMethod.Get, $"/api/client/1/download-app/windows");
@@ -222,8 +241,8 @@ public class ClientControllerTests : IntegrationTestsBase
             Encoding.UTF8,
             "application/octet-stream"
         );
-        
-        var tempFilePath = ApplicationBuildPath.GetPath(OperatingSystem.Windows);
+
+        const string tempFilePath = "temp/lanstreamer-windows.zip";
         var content = Encoding.UTF8.GetBytes("This is a temporary file content.");
 
         string directoryPath = Path.GetDirectoryName(tempFilePath);
@@ -268,6 +287,18 @@ public class ClientControllerTests : IntegrationTestsBase
             VisitTime = DateTime.UtcNow,
             Language = "en",
         });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.StoragePath.ToString(),
+            Value = "temp"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 2,
+            Key = ConfigurationKey.LanstreamerWindowsFilename.ToString(),
+            Value = "lanstreamer-windows.zip"
+        });
         await _context.SaveChangesAsync();
         
         var request = new HttpRequestMessage(HttpMethod.Get, $"/api/client/1/download-app/windows");
@@ -277,8 +308,8 @@ public class ClientControllerTests : IntegrationTestsBase
             "application/json"
         );
         
-        var clientId = 1;
-        var tempFilePath = ApplicationBuildPath.GetPath(OperatingSystem.Windows);
+        const int clientId = 1;
+        const string tempFilePath = "temp/lanstreamer-windows.zip";
         var content = Encoding.UTF8.GetBytes("This is a temporary file content.");
 
         string directoryPath = Path.GetDirectoryName(tempFilePath);
