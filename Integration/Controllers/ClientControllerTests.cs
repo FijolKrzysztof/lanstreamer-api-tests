@@ -1,19 +1,11 @@
 using System.Text;
 using lanstreamer_api_tests.Integration.Abstract;
-using lanstreamer_api_tests.Utills;
-using lanstreamer_api.App.Client;
 using lanstreamer_api.App.Data.Dto;
 using lanstreamer_api.App.Data.Models.Enums;
 using lanstreamer_api.Data.Configuration;
 using lanstreamer_api.Entities;
 using lanstreamer_api.Models;
-using lanstreamer_api.services;
-using lanstreamer_api.services.FileService;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
 using Newtonsoft.Json;
-using OperatingSystem = lanstreamer_api.App.Data.Models.Enums.OperatingSystem;
 
 namespace lanstreamer_api_tests.Integration;
 
@@ -33,7 +25,7 @@ public class ClientControllerTests : IntegrationTestsBase
         request.Headers.Add("User-Agent", "windows");
         request.Headers.Add("X-Forwarded-For", "192.158.1.38");
         
-        var response = await _client.SendAsync(request);
+        var response = await Client.SendAsync(request);
         
         Assert.Equal(201, (int)response.StatusCode);
         
@@ -62,13 +54,13 @@ public class ClientControllerTests : IntegrationTestsBase
         request.Headers.Add("User-Agent", "windows");
         request.Headers.Add("X-Forwarded-For", "192.158.1.38");
         
-        var response = await _client.SendAsync(request);
+        var response = await Client.SendAsync(request);
         
         var responseContent = await response.Content.ReadAsStringAsync();
         var createdObj = JsonConvert.DeserializeObject<CreatedObjResponse>(responseContent)!;
         
-        var clientEntity = await _context.Clients.FindAsync(createdObj.Id);
-        var ipLocationEntity = await _context.IpLocations.FindAsync(clientEntity.IpLocationId);
+        var clientEntity = await Context.Clients.FindAsync(createdObj.Id);
+        var ipLocationEntity = await Context.IpLocations.FindAsync(clientEntity.IpLocationId);
 
         Assert.NotNull(clientEntity);
         Assert.Equal(1, clientEntity.Id);
@@ -95,7 +87,7 @@ public class ClientControllerTests : IntegrationTestsBase
     {
         const string feedback = "feedback";
 
-        _context.Clients.Add(new ClientEntity()
+        Context.Clients.Add(new ClientEntity()
         {
             Id = 1,
             TimeOnSite = TimeSpan.Zero,
@@ -103,7 +95,7 @@ public class ClientControllerTests : IntegrationTestsBase
             VisitTime = DateTime.Now.ToUniversalTime(),
             Language = "en",
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/client/1/add-feedback");
         request.Content = new StringContent(
@@ -112,7 +104,7 @@ public class ClientControllerTests : IntegrationTestsBase
             "application/json"
         );
 
-        var response = await _client.SendAsync(request);
+        var response = await Client.SendAsync(request);
         
         Assert.Equal(200, (int)response.StatusCode);
     }
@@ -122,7 +114,7 @@ public class ClientControllerTests : IntegrationTestsBase
     {
         const string feedback = "feedback";
 
-        _context.Clients.Add(new ClientEntity()
+        Context.Clients.Add(new ClientEntity()
         {
             Id = 1,
             TimeOnSite = TimeSpan.Zero,
@@ -130,7 +122,7 @@ public class ClientControllerTests : IntegrationTestsBase
             VisitTime = DateTime.UtcNow,
             Language = "en",
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/client/1/add-feedback");
         request.Content = new StringContent(
@@ -139,10 +131,10 @@ public class ClientControllerTests : IntegrationTestsBase
             "application/json"
         );
 
-        await _client.SendAsync(request);
+        await Client.SendAsync(request);
         
-        var clientEntity = _context.Clients.First();
-        var feedbackEntities = _context.Feedbacks.Where(f => f.ClientId == clientEntity.Id).ToList();
+        var clientEntity = Context.Clients.First();
+        var feedbackEntities = Context.Feedbacks.Where(f => f.ClientId == clientEntity.Id).ToList();
 
         Assert.NotNull(clientEntity);
         Assert.Single(feedbackEntities);
@@ -154,7 +146,7 @@ public class ClientControllerTests : IntegrationTestsBase
     [Fact]
     public async Task UpdateSessionDuration_ShouldReturnCorrectStatusCode()
     {
-        _context.Clients.Add(new ClientEntity()
+        Context.Clients.Add(new ClientEntity()
         {
             Id = 1,
             TimeOnSite = TimeSpan.Zero,
@@ -162,7 +154,7 @@ public class ClientControllerTests : IntegrationTestsBase
             VisitTime = DateTime.UtcNow,
             Language = "en",
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
         
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/client/1/update-session-duration");
         request.Content = new StringContent(
@@ -171,7 +163,7 @@ public class ClientControllerTests : IntegrationTestsBase
             "application/json"
         );
 
-        var response = await _client.SendAsync(request);
+        var response = await Client.SendAsync(request);
         
         Assert.Equal(200, (int)response.StatusCode);
     }
@@ -179,7 +171,7 @@ public class ClientControllerTests : IntegrationTestsBase
     [Fact]
     public async Task UpdateSessionDuration_ShouldUpdateCorrectDataInDatabase()
     {
-        _context.Clients.Add(new ClientEntity()
+        Context.Clients.Add(new ClientEntity()
         {
             Id = 1,
             TimeOnSite = TimeSpan.Zero,
@@ -187,7 +179,7 @@ public class ClientControllerTests : IntegrationTestsBase
             VisitTime = DateTime.UtcNow,
             Language = "en",
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
         
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/client/1/update-session-duration");
         request.Content = new StringContent(
@@ -196,9 +188,9 @@ public class ClientControllerTests : IntegrationTestsBase
             "application/json"
         );
 
-        await _client.SendAsync(request);
+        await Client.SendAsync(request);
         
-        var resultDbObj = await _context.Clients.FindAsync(1);
+        var resultDbObj = await Context.Clients.FindAsync(1);
 
         Assert.NotNull(resultDbObj);
         Assert.Equal(TimeSpan.Zero.TotalMinutes, (int)resultDbObj.TimeOnSite.TotalMinutes);
@@ -207,7 +199,7 @@ public class ClientControllerTests : IntegrationTestsBase
     [Fact]
     public async Task DownloadApp_ShouldReturnFile()
     {
-        _context.Clients.Add(new ClientEntity()
+        Context.Clients.Add(new ClientEntity()
         {
             Id = 1,
             TimeOnSite = TimeSpan.Zero,
@@ -215,25 +207,25 @@ public class ClientControllerTests : IntegrationTestsBase
             VisitTime = DateTime.UtcNow,
             Language = "en",
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.StoragePath.ToString(),
             Value = "temp"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
             Key = ConfigurationKey.LanstreamerLinuxFilename.ToString(),
             Value = "lanstreamer-linux.zip"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 3,
             Key = ConfigurationKey.LanstreamerWindowsFilename.ToString(),
             Value = "lanstreamer-windows.zip"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
         
         var request = new HttpRequestMessage(HttpMethod.Get, $"/api/client/1/download-app/windows");
         request.Content = new StringContent(
@@ -253,7 +245,7 @@ public class ClientControllerTests : IntegrationTestsBase
         
         await File.WriteAllBytesAsync(tempFilePath, content);
         
-        var response = await _client.SendAsync(request);
+        var response = await Client.SendAsync(request);
         
         Assert.Equal(200, (int)response.StatusCode);
         
@@ -279,7 +271,7 @@ public class ClientControllerTests : IntegrationTestsBase
     [Fact]
     public async Task DownloadApp_ShouldUpdateCorrectDataInDatabase()
     {
-        _context.Clients.Add(new ClientEntity()
+        Context.Clients.Add(new ClientEntity()
         {
             Id = 1,
             TimeOnSite = TimeSpan.Zero,
@@ -287,19 +279,19 @@ public class ClientControllerTests : IntegrationTestsBase
             VisitTime = DateTime.UtcNow,
             Language = "en",
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.StoragePath.ToString(),
             Value = "temp"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
             Key = ConfigurationKey.LanstreamerWindowsFilename.ToString(),
             Value = "lanstreamer-windows.zip"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
         
         var request = new HttpRequestMessage(HttpMethod.Get, $"/api/client/1/download-app/windows");
         request.Content = new StringContent(
@@ -320,13 +312,81 @@ public class ClientControllerTests : IntegrationTestsBase
         
         await File.WriteAllBytesAsync(tempFilePath, content);
 
-        await _client.SendAsync(request);
+        await Client.SendAsync(request);
         
-        var resultDbObj = await _context.Clients.FindAsync(clientId);
-        await _context.Entry(resultDbObj).ReloadAsync(); 
+        var resultDbObj = await Context.Clients.FindAsync(clientId);
+        await Context.Entry(resultDbObj).ReloadAsync(); 
 
         Assert.NotNull(resultDbObj);
         Assert.Equal(1, resultDbObj.Downloads);
+        
+        if (Directory.Exists(directoryPath))
+        {
+            Directory.Delete(directoryPath, true);
+        }
+    }
+
+    [Fact]
+    public async Task CheckAppExistence_ShouldReturnNotFound()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Head, $"/api/client/1/download-app/windows");
+        request.Content = new StringContent(
+            "",
+            Encoding.UTF8,
+            "application/json"
+        );
+        
+        var response = await Client.SendAsync(request);
+        
+        Assert.Equal(404, (int)response.StatusCode);
+    }
+    
+    [Fact]
+    public async Task CheckAppExistence_ShouldReturnOk()
+    {
+        Context.Clients.Add(new ClientEntity()
+        {
+            Id = 1,
+            TimeOnSite = TimeSpan.Zero,
+            OperatingSystem = "Windows",
+            VisitTime = DateTime.UtcNow,
+            Language = "en",
+        });
+        Context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.StoragePath.ToString(),
+            Value = "temp"
+        });
+        Context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 2,
+            Key = ConfigurationKey.LanstreamerWindowsFilename.ToString(),
+            Value = "lanstreamer-windows.zip"
+        });
+        await Context.SaveChangesAsync();
+        
+        var request = new HttpRequestMessage(HttpMethod.Head, $"/api/client/1/download-app/windows");
+        request.Content = new StringContent(
+            "",
+            Encoding.UTF8,
+            "application/json"
+        );
+        
+        const string tempFilePath = "temp/lanstreamer-windows.zip";
+        var content = Encoding.UTF8.GetBytes("This is a temporary file content.");
+
+        var directoryPath = Path.GetDirectoryName(tempFilePath);
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath!);
+        }
+        
+        await File.WriteAllBytesAsync(tempFilePath, content);
+        
+        var response = await Client.SendAsync(request);
+        
+        Assert.Equal(200, (int)response.StatusCode);
         
         if (Directory.Exists(directoryPath))
         {

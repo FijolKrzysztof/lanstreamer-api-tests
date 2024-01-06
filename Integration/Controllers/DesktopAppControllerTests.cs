@@ -7,22 +7,20 @@ using lanstreamer_api.Data.Configuration;
 using lanstreamer_api.Models;
 using Newtonsoft.Json;
 
-namespace lanstreamer_api_tests.Integration;
+namespace lanstreamer_api_tests.Integration.Controllers;
 
 public class DesktopAppControllerTests : IntegrationTestsBase
 {
     [Fact]
-    public async Task ShouldThrowAnError_WhenWrongAppVersion()
+    public async Task Access_ShouldThrowAnError_WhenWrongAppVersion()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.DesktopAppVersion.ToString(),
             Value = "2.0"
         });
-        await _context.SaveChangesAsync();
-        
-        // TODO: dodać części uwspólnione
+        await Context.SaveChangesAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/desktop-app/access?accessCode=123&version=1.0");
         request.Content = new StringContent(
@@ -31,7 +29,7 @@ public class DesktopAppControllerTests : IntegrationTestsBase
             "text/event-stream"
         );
 
-        var response = await _client.SendAsync(request);
+        var response = await Client.SendAsync(request);
 
         Assert.Equal(401, (int)response.StatusCode);
 
@@ -43,21 +41,21 @@ public class DesktopAppControllerTests : IntegrationTestsBase
     }
 
     [Fact]
-    public async Task ShouldPassTimeout()
+    public async Task Access_ShouldPassTimeout()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.DesktopAppVersion.ToString(),
             Value = "1.0"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
             Key = ConfigurationKey.LoginTimeoutSeconds.ToString(),
             Value = "1"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/desktop-app/access?accessCode=123&version=1.0");
         request.Content = new StringContent(
@@ -66,39 +64,45 @@ public class DesktopAppControllerTests : IntegrationTestsBase
             "text/event-stream"
         );
 
-        var response = await _client.SendAsync(request);
-        
+        var response = await Client.SendAsync(request);
+
         Assert.Equal(408, (int)response.StatusCode);
-        
+
         var responseContent = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(responseContent)!;
-        
+
         Assert.Equal(408, errorResponse.StatusCode);
         Assert.Equal("Timeout waiting for user login", errorResponse.Message);
     }
 
     [Fact]
-    public async Task ShouldReturnNumber()
+    public async Task Access_ShouldReturnNumber()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.DesktopAppVersion.ToString(),
             Value = "1.0"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
             Key = ConfigurationKey.LoginTimeoutSeconds.ToString(),
-            Value = "60"
+            Value = "3"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 3,
             Key = ConfigurationKey.OfflineLogins.ToString(),
             Value = "3"
         });
-        await _context.SaveChangesAsync();
+        Context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 4,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
+            Value = "123"
+        });
+        await Context.SaveChangesAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/desktop-app/access?accessCode=123&version=1.0");
         request.Content = new StringContent(
@@ -109,8 +113,8 @@ public class DesktopAppControllerTests : IntegrationTestsBase
 
         var task = Task.Run(async () =>
         {
-            var response = await _client.SendAsync(request);
-            
+            var response = await Client.SendAsync(request);
+
             await using var stream = await response.Content.ReadAsStreamAsync();
             using var reader = new StreamReader(stream);
 
@@ -119,13 +123,10 @@ public class DesktopAppControllerTests : IntegrationTestsBase
 
             try
             {
-                while (!cancellationTokenSource.Token.IsCancellationRequested)
-                {
-                    var line = await reader.ReadLineAsync();
-                    
-                    Assert.Equal(3, int.Parse(line));
-                    return;
-                }
+                var line = await reader.ReadLineAsync(cancellationTokenSource.Token);
+
+                Assert.NotNull(line);
+                Assert.Equal(3, int.Parse(line));
             }
             catch (OperationCanceledException)
             {
@@ -136,12 +137,10 @@ public class DesktopAppControllerTests : IntegrationTestsBase
                 cancellationTokenSource.Dispose();
             }
         });
-        
-        const string accessToken = "correct-token";
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        await _client.PostAsync("/api/user/login", new StringContent(
+        await Client.PostAsync("/api/user/login", new StringContent(
             JsonConvert.SerializeObject(new UserDto()
             {
                 AccessCode = "123"
@@ -154,27 +153,33 @@ public class DesktopAppControllerTests : IntegrationTestsBase
     }
 
     [Fact]
-    public async Task ShouldUpdateAppVersion()
+    public async Task Access_ShouldUpdateAppVersion()
     {
-           _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.DesktopAppVersion.ToString(),
             Value = "1.0"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
             Key = ConfigurationKey.LoginTimeoutSeconds.ToString(),
-            Value = "60"
+            Value = "3"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 3,
             Key = ConfigurationKey.OfflineLogins.ToString(),
             Value = "3"
         });
-        await _context.SaveChangesAsync();
+        Context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 4,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
+            Value = "123"
+        });
+        await Context.SaveChangesAsync();
 
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/desktop-app/access?accessCode=123&version=1.0");
         request.Content = new StringContent(
@@ -185,19 +190,17 @@ public class DesktopAppControllerTests : IntegrationTestsBase
 
         var task = Task.Run(async () =>
         {
-            await _client.SendAsync(request);
-            
-            var user = await _context.Users.FindAsync(1);
+            await Client.SendAsync(request);
+
+            var user = await Context.Users.FindAsync(1);
 
             Assert.NotNull(user);
             Assert.Equal(1, user.AppVersion);
         });
 
-        const string accessToken = "correct-token";
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        await _client.PostAsync("/api/user/login", new StringContent(
+        await Client.PostAsync("/api/user/login", new StringContent(
             JsonConvert.SerializeObject(new UserDto()
             {
                 AccessCode = "123"

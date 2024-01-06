@@ -12,9 +12,10 @@ namespace lanstreamer_api_tests.Integration.Abstract;
 
 public abstract class IntegrationTestsBase : IDisposable
 {
-    protected readonly TestServer _server;
-    protected readonly HttpClient _client;
-    protected readonly ApplicationDbContext _context;
+    protected readonly TestServer Server;
+    protected readonly HttpClient Client;
+    protected readonly ApplicationDbContext Context;
+    protected const string CorrectToken = "correct-token";
 
     protected IntegrationTestsBase()
     {
@@ -23,16 +24,16 @@ public abstract class IntegrationTestsBase : IDisposable
             .Options;
 
         var googleServiceMock = new Mock<IGoogleAuthenticationService>();
-        googleServiceMock.Setup(x => x.VerifyGoogleToken("correct-token"))
+        googleServiceMock.Setup(x => x.VerifyGoogleToken(CorrectToken))
             .ReturnsAsync(new GoogleJsonWebSignature.Payload()
             {
                 Email = "email",
                 Subject = "subject/id",
                 Name = "name"
             }); 
-        googleServiceMock.Setup(x => x.VerifyGoogleToken(It.Is<string>(s => s != "correct-token"))).Throws<Exception>();
+        googleServiceMock.Setup(x => x.VerifyGoogleToken(It.Is<string>(s => s != CorrectToken))).Throws<Exception>();
         
-        _server = new TestServer(new WebHostBuilder()
+        Server = new TestServer(new WebHostBuilder()
             .UseStartup<Startup>()
             .ConfigureTestServices(services =>
             {
@@ -40,16 +41,16 @@ public abstract class IntegrationTestsBase : IDisposable
                 services.AddScoped<ApplicationDbContext>(_ => new ApplicationDbContext(options));
             }));
 
-        _client = _server.CreateClient();
+        Client = Server.CreateClient();
 
-        _context = _server.Host.Services.GetRequiredService<ApplicationDbContext>();
+        Context = Server.Host.Services.GetRequiredService<ApplicationDbContext>();
     }
     
     public void Dispose()
     {
-        _context.Database.EnsureDeleted();
-        _context.Dispose();
-        _client.Dispose();
-        _server.Dispose();
+        Context.Database.EnsureDeleted();
+        Context.Dispose();
+        Client.Dispose();
+        Server.Dispose();
     }
 }

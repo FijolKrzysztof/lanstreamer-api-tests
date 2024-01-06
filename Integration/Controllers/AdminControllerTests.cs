@@ -23,7 +23,7 @@ public class AdminControllerTests : IntegrationTestsBase
         using var formData = new MultipartFormDataContent();
         formData.Add(fileContent, "Data", "dummy.txt");
 
-        var response = await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
+        var response = await Client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
 
         var responseContent = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(responseContent)!;
@@ -33,18 +33,16 @@ public class AdminControllerTests : IntegrationTestsBase
         Assert.Equal(401, errorResponse.StatusCode);
     }
     
-    // TODO: dodać test który rzeczywiście sprawdzi czy plik jest zipem
-
     [Fact]
     public async Task UploadDesktopApp_ShouldNotAuthorize_WhenNoAdminRole()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "123"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
         
         var fileBytes = Encoding.UTF8.GetBytes("This is a dummy file");
         var fileContent = new ByteArrayContent(fileBytes);
@@ -52,11 +50,9 @@ public class AdminControllerTests : IntegrationTestsBase
         using var formData = new MultipartFormDataContent();
         formData.Add(fileContent, "Data", "dummy.txt");
 
-        const string accessToken = "correct-token";
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
+        var response = await Client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
 
         var responseContent = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(responseContent)!;
@@ -69,13 +65,13 @@ public class AdminControllerTests : IntegrationTestsBase
     [Fact]
     public async Task UploadDesktopApp_ShouldReturnError_WhenFileIsEmpty()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         var fileBytes = Encoding.UTF8.GetBytes("");
         var fileContent = new ByteArrayContent(fileBytes);
@@ -83,11 +79,9 @@ public class AdminControllerTests : IntegrationTestsBase
         using var formData = new MultipartFormDataContent();
         formData.Add(fileContent, "file", "dummy.txt");
         
-        const string accessToken = "correct-token";
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
+        var response = await Client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
 
         var responseContent = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(responseContent)!;
@@ -100,13 +94,13 @@ public class AdminControllerTests : IntegrationTestsBase
     [Fact]
     public async Task UploadDesktopApp_ShouldReturnError_WhenFileHasWrongFormat()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         var fileBytes = Encoding.UTF8.GetBytes("content");
         var fileContent = new ByteArrayContent(fileBytes);
@@ -114,11 +108,9 @@ public class AdminControllerTests : IntegrationTestsBase
         using var formData = new MultipartFormDataContent();
         formData.Add(fileContent, "file", "dummy.txt");
         
-        const string accessToken = "correct-token";
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
+        var response = await Client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
 
         var responseContent = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(responseContent)!;
@@ -131,13 +123,13 @@ public class AdminControllerTests : IntegrationTestsBase
     [Fact]
     public async Task UploadDesktopApp_ShouldReturnError_WhenNoOperatingSystem()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
         
         var fileBytes = Encoding.UTF8.GetBytes("content");
         var fileContent = new ByteArrayContent(fileBytes);
@@ -145,11 +137,9 @@ public class AdminControllerTests : IntegrationTestsBase
         using var formData = new MultipartFormDataContent();
         formData.Add(fileContent, "file", "dummy.txt");
         
-        const string accessToken = "correct-token";
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await _client.PostAsync("/api/admin/upload-desktop-app", formData);
+        var response = await Client.PostAsync("/api/admin/upload-desktop-app", formData);
 
         var responseContent = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(responseContent)!;
@@ -161,31 +151,31 @@ public class AdminControllerTests : IntegrationTestsBase
     [Fact]
     public async Task UploadDesktopApp_ShouldReturnCorrectStatusCode()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
             Key = ConfigurationKey.StoragePath.ToString(),
             Value = "temp"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 3,
             Key = ConfigurationKey.LanstreamerLinuxFilename.ToString(),
             Value = "lanstreamer-linux.zip"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 4,
             Key = ConfigurationKey.LanstreamerWindowsFilename.ToString(),
             Value = "lanstreamer-windows.zip"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         var filesToZip = new Dictionary<string, byte[]>
         {
@@ -216,10 +206,9 @@ public class AdminControllerTests : IntegrationTestsBase
         using var formData = new MultipartFormDataContent();
         formData.Add(zipContent, "file", "server_file.zip");
 
-        const string accessToken = "correct-token";
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        var response = await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
+        var response = await Client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
 
         Assert.Equal(200, (int)response.StatusCode);
 
@@ -233,25 +222,25 @@ public class AdminControllerTests : IntegrationTestsBase
     [Fact]
     public async Task UploadDesktopApp_ShouldSaveFile()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 2,
             Key = ConfigurationKey.StoragePath.ToString(),
             Value = "temp"
         });
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 3,
             Key = ConfigurationKey.LanstreamerLinuxFilename.ToString(),
             Value = "lanstreamer-linux.zip"
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         var filesToZip = new Dictionary<string, byte[]>
         {
@@ -282,15 +271,24 @@ public class AdminControllerTests : IntegrationTestsBase
         using var formData = new MultipartFormDataContent();
         formData.Add(zipContent, "file", "server_file.zip");
 
-        const string accessToken = "correct-token";
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=linux", formData);
+        await Client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=linux", formData);
 
         const string filePath = "temp/lanstreamer-linux.zip";
         var fileExists = File.Exists(filePath);
 
         Assert.True(fileExists);
+        
+        var fileHeader = new byte[4];
+        using (var fileStream = File.OpenRead(filePath))
+        {
+            await fileStream.ReadAsync(fileHeader, 0, 4);
+        }
+
+        var isZipFileHeader = fileHeader[0] == 0x50 && fileHeader[1] == 0x4B;
+        Assert.True(isZipFileHeader);
+        
         File.Delete(filePath);
     }
 }
