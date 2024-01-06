@@ -3,6 +3,7 @@ using System.Text;
 using lanstreamer_api_tests.Integration.Abstract;
 using lanstreamer_api.App.Data.Dto.Responses;
 using lanstreamer_api.App.Data.Models.Enums;
+using lanstreamer_api.Data.Configuration;
 using lanstreamer_api.Data.Modules.AccessCode;
 using lanstreamer_api.Models;
 using lanstreamer_api.Models.Responses;
@@ -53,6 +54,14 @@ public class UserControllerTests : IntegrationTestsBase
     [Fact]
     public async Task Login_ShouldReturnCorrectRoles_WhenEmptyAccessCode()
     {
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
+            Value = "123",
+        });
+        await _context.SaveChangesAsync();
+        
         const string accessToken = "correct-token";
         
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -79,6 +88,14 @@ public class UserControllerTests : IntegrationTestsBase
     [Fact]
     public async Task Login_ShouldReturnCorrectRoles()
     {
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
+            Value = "123",
+        });
+        await _context.SaveChangesAsync();
+        
         const string accessToken = "correct-token";
         
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -101,6 +118,12 @@ public class UserControllerTests : IntegrationTestsBase
     [Fact]
     public async Task Login_ShouldAddCorrectDataToDatabase()
     {
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
+            Value = "123",
+        });
         _context.Accesses.Add(new AccessEntity()
         {
             Code = "access-code",

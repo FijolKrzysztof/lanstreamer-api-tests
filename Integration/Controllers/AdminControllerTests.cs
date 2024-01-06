@@ -38,6 +38,14 @@ public class AdminControllerTests : IntegrationTestsBase
     [Fact]
     public async Task UploadDesktopApp_ShouldNotAuthorize_WhenNoAdminRole()
     {
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
+            Value = "123"
+        });
+        await _context.SaveChangesAsync();
+        
         var fileBytes = Encoding.UTF8.GetBytes("This is a dummy file");
         var fileContent = new ByteArrayContent(fileBytes);
 
@@ -159,6 +167,24 @@ public class AdminControllerTests : IntegrationTestsBase
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
         });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 2,
+            Key = ConfigurationKey.StoragePath.ToString(),
+            Value = "temp"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 3,
+            Key = ConfigurationKey.LanstreamerLinuxFilename.ToString(),
+            Value = "lanstreamer-linux.zip"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 4,
+            Key = ConfigurationKey.LanstreamerWindowsFilename.ToString(),
+            Value = "lanstreamer-windows.zip"
+        });
         await _context.SaveChangesAsync();
 
         var filesToZip = new Dictionary<string, byte[]>
@@ -196,8 +222,8 @@ public class AdminControllerTests : IntegrationTestsBase
         var response = await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=windows", formData);
 
         Assert.Equal(200, (int)response.StatusCode);
-        
-        var filePath = ApplicationBuildPath.GetPath(OperatingSystem.Windows);
+
+        const string filePath = "temp/lanstreamer-windows.zip";
         if (File.Exists(filePath))
         {
             File.Delete(filePath);
@@ -212,6 +238,18 @@ public class AdminControllerTests : IntegrationTestsBase
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "subject/id"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 2,
+            Key = ConfigurationKey.StoragePath.ToString(),
+            Value = "temp"
+        });
+        _context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 3,
+            Key = ConfigurationKey.LanstreamerLinuxFilename.ToString(),
+            Value = "lanstreamer-linux.zip"
         });
         await _context.SaveChangesAsync();
 
@@ -249,7 +287,7 @@ public class AdminControllerTests : IntegrationTestsBase
 
         await _client.PostAsync("/api/admin/upload-desktop-app?operatingSystem=linux", formData);
 
-        var filePath = ApplicationBuildPath.GetPath(OperatingSystem.Linux);
+        const string filePath = "temp/lanstreamer-linux.zip";
         var fileExists = File.Exists(filePath);
 
         Assert.True(fileExists);

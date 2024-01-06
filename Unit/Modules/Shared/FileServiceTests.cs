@@ -1,4 +1,6 @@
+using lanstreamer_api.Data.Configuration;
 using lanstreamer_api.services.FileService;
+using Moq;
 
 namespace lanstreamer_api_tests.Unit.Modules.Shared;
 
@@ -8,7 +10,11 @@ public class FileServiceTests
     
     public FileServiceTests()
     {
-        _fileService = new FileService();
+        var configurationRepository = new Mock<IConfigurationRepository>();
+        
+        _fileService = new FileService(configurationRepository.Object);
+        
+        // TODO: testy do GetDesktopAppPath
     }
     
     [Fact]
