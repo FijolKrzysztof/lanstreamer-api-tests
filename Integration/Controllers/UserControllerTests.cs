@@ -49,6 +49,32 @@ public class UserControllerTests : IntegrationTestsBase
         Assert.Equal("Invalid google token", errorResponse.Message);
         Assert.Equal(401, errorResponse.StatusCode);
     }
+    
+    [Fact]
+    public async Task Login_ShouldReturnCorrectRoles_WhenEmptyAccessCode()
+    {
+        const string accessToken = "correct-token";
+        
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _client.PostAsync("/api/user/login", new StringContent(
+            JsonConvert.SerializeObject(new UserDto()
+            {
+                AccessCode = "",
+                Id = -1,
+            }),
+            Encoding.UTF8,
+            "application/json"
+        ));
+
+        Assert.Equal(200, (int)response.StatusCode);
+        
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(responseContent)!;
+        
+        Assert.NotNull(loginResponse);
+        Assert.Equal(Role.User.ToString(), loginResponse.Roles.First());
+    }
 
     [Fact]
     public async Task Login_ShouldReturnCorrectRoles()
