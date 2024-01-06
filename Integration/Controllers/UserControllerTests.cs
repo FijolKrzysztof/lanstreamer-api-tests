@@ -16,7 +16,7 @@ public class UserControllerTests : IntegrationTestsBase
     [Fact]
     public async Task Login_ShouldNotAuthorize_WhenNoGoogleId()
     {
-        var response = await _client.PostAsync("/api/user/login", new StringContent(
+        var response = await Client.PostAsync("/api/user/login", new StringContent(
             JsonConvert.SerializeObject(new UserDto()),
             Encoding.UTF8,
             "application/json"
@@ -35,9 +35,9 @@ public class UserControllerTests : IntegrationTestsBase
     {
         const string accessToken = "incorrect-token";
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await _client.PostAsync("/api/user/login", new StringContent(
+        var response = await Client.PostAsync("/api/user/login", new StringContent(
             JsonConvert.SerializeObject(new UserDto()),
             Encoding.UTF8,
             "application/json"
@@ -50,23 +50,49 @@ public class UserControllerTests : IntegrationTestsBase
         Assert.Equal("Invalid google token", errorResponse.Message);
         Assert.Equal(401, errorResponse.StatusCode);
     }
-    
+
     [Fact]
-    public async Task Login_ShouldReturnCorrectRoles_WhenEmptyAccessCode()
+    public async Task Login_ShouldReturnCorrectRoles()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "123",
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
         
-        const string accessToken = "correct-token";
-        
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
-        var response = await _client.PostAsync("/api/user/login", new StringContent(
+        var response = await Client.PostAsync("/api/user/login", new StringContent(
+            JsonConvert.SerializeObject(new UserDto()),
+            Encoding.UTF8,
+            "application/json"
+        ));
+
+        Assert.Equal(200, (int)response.StatusCode);
+        
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(responseContent)!;
+        
+        Assert.NotNull(loginResponse);
+        Assert.Equal(Role.User.ToString(), loginResponse.Roles.First());
+    }
+    
+    [Fact]
+    public async Task Login_ShouldReturnCorrectRoles_WhenEmptyAccessCode()
+    {
+        Context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.AdminIdentifier.ToString(),
+            Value = "123",
+        });
+        await Context.SaveChangesAsync();
+        
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
+
+        var response = await Client.PostAsync("/api/user/login", new StringContent(
             JsonConvert.SerializeObject(new UserDto()
             {
                 AccessCode = "",
@@ -84,56 +110,24 @@ public class UserControllerTests : IntegrationTestsBase
         Assert.NotNull(loginResponse);
         Assert.Equal(Role.User.ToString(), loginResponse.Roles.First());
     }
-
-    [Fact]
-    public async Task Login_ShouldReturnCorrectRoles()
-    {
-        _context.Configurations.Add(new ConfigurationEntity()
-        {
-            Id = 1,
-            Key = ConfigurationKey.AdminIdentifier.ToString(),
-            Value = "123",
-        });
-        await _context.SaveChangesAsync();
-        
-        const string accessToken = "correct-token";
-        
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await _client.PostAsync("/api/user/login", new StringContent(
-            JsonConvert.SerializeObject(new UserDto()),
-            Encoding.UTF8,
-            "application/json"
-        ));
-
-        Assert.Equal(200, (int)response.StatusCode);
-        
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(responseContent)!;
-        
-        Assert.NotNull(loginResponse);
-        Assert.Equal(Role.User.ToString(), loginResponse.Roles.First());
-    }
     
     [Fact]
     public async Task Login_ShouldAddCorrectDataToDatabase()
     {
-        _context.Configurations.Add(new ConfigurationEntity()
+        Context.Configurations.Add(new ConfigurationEntity()
         {
             Id = 1,
             Key = ConfigurationKey.AdminIdentifier.ToString(),
             Value = "123",
         });
-        _context.Accesses.Add(new AccessEntity()
+        Context.Accesses.Add(new AccessEntity()
         {
             Code = "access-code",
             UserId = 1,
         });
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
         
-        const string accessToken = "correct-token";
-        
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CorrectToken);
 
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/user/login");
         request.Content = new StringContent(
@@ -149,11 +143,11 @@ public class UserControllerTests : IntegrationTestsBase
         request.Headers.Add("User-Agent", "windows");
         request.Headers.Add("X-Forwarded-For", "192.158.1.38");
 
-        await _client.SendAsync(request);
+        await Client.SendAsync(request);
         
-        var userEntity = await _context.Users.FindAsync(1);
-        var ipLocationEntity = await _context.IpLocations.FindAsync(userEntity.IpLocationId);
-        var accessEntity = await _context.Accesses.FindAsync(1);
+        var userEntity = await Context.Users.FindAsync(1);
+        var ipLocationEntity = await Context.IpLocations.FindAsync(userEntity.IpLocationId);
+        var accessEntity = await Context.Accesses.FindAsync(1);
         
         Assert.NotNull(userEntity);
         Assert.Equal(1, userEntity.Id);
