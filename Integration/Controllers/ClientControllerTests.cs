@@ -327,7 +327,7 @@ public class ClientControllerTests : IntegrationTestsBase
     }
 
     [Fact]
-    public async Task CheckAppExistence_ShouldReturnNotFound()
+    public async Task CheckAppPresence_ShouldReturnNotFound()
     {
         var request = new HttpRequestMessage(HttpMethod.Head, $"/api/client/1/download-app/windows");
         request.Content = new StringContent(
@@ -342,7 +342,7 @@ public class ClientControllerTests : IntegrationTestsBase
     }
     
     [Fact]
-    public async Task CheckAppExistence_ShouldReturnOk()
+    public async Task CheckAppPresence_ShouldReturnOk()
     {
         Context.Clients.Add(new ClientEntity()
         {
@@ -387,6 +387,62 @@ public class ClientControllerTests : IntegrationTestsBase
         var response = await Client.SendAsync(request);
         
         Assert.Equal(200, (int)response.StatusCode);
+        
+        if (Directory.Exists(directoryPath))
+        {
+            Directory.Delete(directoryPath, true);
+        }
+    }
+    
+    [Fact]
+    public async Task CheckAppPresence_ShouldNotUpdateDownloads()
+    {
+        Context.Clients.Add(new ClientEntity()
+        {
+            Id = 1,
+            TimeOnSite = TimeSpan.Zero,
+            OperatingSystem = "Windows",
+            VisitTime = DateTime.UtcNow,
+            Language = "en",
+        });
+        Context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 1,
+            Key = ConfigurationKey.StoragePath.ToString(),
+            Value = "temp"
+        });
+        Context.Configurations.Add(new ConfigurationEntity()
+        {
+            Id = 2,
+            Key = ConfigurationKey.LanstreamerWindowsFilename.ToString(),
+            Value = "lanstreamer-windows.zip"
+        });
+        await Context.SaveChangesAsync();
+        
+        var request = new HttpRequestMessage(HttpMethod.Head, $"/api/client/1/download-app/windows");
+        request.Content = new StringContent(
+            "",
+            Encoding.UTF8,
+            "application/json"
+        );
+        
+        const string tempFilePath = "temp/lanstreamer-windows.zip";
+        var content = Encoding.UTF8.GetBytes("This is a temporary file content.");
+
+        var directoryPath = Path.GetDirectoryName(tempFilePath);
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath!);
+        }
+        
+        await File.WriteAllBytesAsync(tempFilePath, content);
+        
+        await Client.SendAsync(request);
+        
+        var resultDbObj = await Context.Clients.FindAsync(1);
+
+        Assert.NotNull(resultDbObj);
+        Assert.Null(resultDbObj.Downloads);
         
         if (Directory.Exists(directoryPath))
         {
