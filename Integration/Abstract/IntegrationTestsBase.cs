@@ -5,6 +5,7 @@ using lanstreamer_api.Data.Context;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
@@ -19,6 +20,8 @@ public abstract class IntegrationTestsBase : IDisposable
 
     protected IntegrationTestsBase()
     {
+        var configuration = new Mock<IConfiguration>();
+        configuration.Setup(x => x.GetSection("ConnectionStrings")["Schema"]).Returns("test");
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: "TestDatabase_" + Guid.NewGuid())
             .Options;
@@ -38,7 +41,7 @@ public abstract class IntegrationTestsBase : IDisposable
             .ConfigureTestServices(services =>
             {
                 services.AddScoped<IGoogleAuthenticationService>(_ => googleServiceMock.Object);
-                services.AddScoped<ApplicationDbContext>(_ => new ApplicationDbContext(options));
+                services.AddScoped<ApplicationDbContext>(_ => new ApplicationDbContext(options, configuration.Object));
             }));
 
         Client = Server.CreateClient();

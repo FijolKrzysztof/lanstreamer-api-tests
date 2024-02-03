@@ -35,7 +35,7 @@ public class ConfigurationTests
                 .UseNpgsql(configuration.GetConnectionString("Database"))
                 .Options;
         
-            await using var context = new ApplicationDbContext(options);
+            await using var context = new ApplicationDbContext(options, configuration);
             var configurations = await context.Configurations.ToListAsync();
         
             Assert.NotEmpty(configurations);

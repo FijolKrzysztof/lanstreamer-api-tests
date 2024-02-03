@@ -1,6 +1,8 @@
+using lanstreamer_api.App.Data.Models.Enums;
 using lanstreamer_api.Data.Configuration;
 using lanstreamer_api.services.FileService;
 using Moq;
+using OperatingSystem = lanstreamer_api.App.Data.Models.Enums.OperatingSystem;
 
 namespace lanstreamer_api_tests.Unit.Modules.Shared;
 
@@ -13,8 +15,6 @@ public class FileServiceTests
         var configurationRepository = new Mock<IConfigurationRepository>();
         
         _fileService = new FileService(configurationRepository.Object);
-        
-        // TODO: testy do GetDesktopAppPath
     }
     
     [Fact]
@@ -50,5 +50,37 @@ public class FileServiceTests
         var fileStream = _fileService.ReadFileStream(path);
         
         Assert.Equal(path, fileStream.Name);
+    }
+    
+    [Fact]
+    public async Task GetDesktopAppPath_ShouldReturnCorrectPath_WhenWindows()
+    {
+        var configurationRepository = new Mock<IConfigurationRepository>();
+        configurationRepository.Setup(x => x.GetByKey(ConfigurationKey.StoragePath))
+            .ReturnsAsync("/test/path");
+        configurationRepository.Setup(x => x.GetByKey(ConfigurationKey.LanstreamerWindowsFilename))
+            .ReturnsAsync("test.zip");
+        
+        var fileService = new FileService(configurationRepository.Object);
+        
+        var path = await fileService.GetDesktopAppPath(OperatingSystem.Windows);
+        
+        Assert.Equal("/test/path/test.zip", path);
+    }
+    
+    [Fact]
+    public async Task GetDesktopAppPath_ShouldReturnCorrectPath_WhenLinux()
+    {
+        var configurationRepository = new Mock<IConfigurationRepository>();
+        configurationRepository.Setup(x => x.GetByKey(ConfigurationKey.StoragePath))
+            .ReturnsAsync("/test/path");
+        configurationRepository.Setup(x => x.GetByKey(ConfigurationKey.LanstreamerLinuxFilename))
+            .ReturnsAsync("test.zip");
+        
+        var fileService = new FileService(configurationRepository.Object);
+        
+        var path = await fileService.GetDesktopAppPath(OperatingSystem.Linux);
+        
+        Assert.Equal("/test/path/test.zip", path);
     }
 }
